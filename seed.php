@@ -3,33 +3,50 @@
 require 'db.php';
 require 'utils.php';
 
-// 1. We define the name of the file FIRST.
+// --- NEW PART: CREATE TABLE IF IT DOESN'T EXIST ---
+try {
+    $createTableSql = "
+    CREATE TABLE IF NOT EXISTS profiles (
+        id CHAR(36) PRIMARY KEY,
+        name VARCHAR(255) UNIQUE,
+        gender VARCHAR(10),
+        gender_probability FLOAT,
+        age INT,
+        age_group VARCHAR(20),
+        country_id VARCHAR(2),
+        country_name VARCHAR(100),
+        country_probability FLOAT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;";
+
+    $pdo->exec($createTableSql);
+    echo "Table 'profiles' is ready.<br>";
+} catch (PDOException $e) {
+    die("Table creation failed: " . $e->getMessage());
+}
+// --------------------------------------------------
+
 $my_file = 'seed_profiles.json';
 
-// 2. We check if it exists.
 if (!file_exists($my_file)) {
-    die("Error: I cannot find <b>$my_file</b>. Make sure it is in the same folder as this script!");
+    die("Error: I cannot find <b>$my_file</b>.");
 }
 
-// 3. Now we read it.
 $jsonData = file_get_contents($my_file);
 $decodedData = json_decode($jsonData, true);
-
-// 4. Get the profiles (going inside the "profiles" key we saw earlier)
 $profiles = $decodedData['profiles'] ?? [];
 
 if (empty($profiles)) {
-    die("Error: The file was found, but the 'profiles' list is empty or formatted wrong.");
+    die("Error: The file was found, but the 'profiles' list is empty.");
 }
 
 echo "Found " . count($profiles) . " profiles. Starting seed...<br>";
 
-// 5. Prepare the SQL (ON DUPLICATE KEY UPDATE ensures we don't double-seed)
-$sql = "INSERT INTO profiles (
+// We use IGNORE here to skip duplicates based on the UNIQUE 'name' field
+$sql = "INSERT IGNORE INTO profiles (
             id, name, gender, gender_probability, age, 
             age_group, country_id, country_name, country_probability
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE name=name";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $pdo->prepare($sql);
 $count = 0;
@@ -49,7 +66,6 @@ foreach ($profiles as $profile) {
         ]);
         $count++;
     } catch (Exception $e) {
-        // This quietly skips people who are already in the database
         continue;
     }
 }
