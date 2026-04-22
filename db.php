@@ -1,21 +1,25 @@
 <?php
 // db.php
-$host = 'localhost';
-$db = 'intelli-quer';
-$user = 'root';
-$pass = '';
-
+$host = 'db.pxxl.pro'; // The universal internal address
+$port = '44318';      // The standard internal MySQL port
+$db = 'pxxldb_moa3zm57f51898a';
+$user = 'pxxluser_moa3zm5607ac023';
+$pass = '67a111991c4a241117646a565accbe84d2c08a85c8f79abb3944bb1a0ef6d753';
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
+    // We explicitly include the port 3306 for the internal network
+
+    $conn = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     header('Content-Type: application/json');
-    http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Server failure"]);
+    echo json_encode([
+        "status" => "error",
+        "message" => "Connection Failed: " . $e->getMessage(),
+        "debug_info" => "Connecting to $host on port $port"
+    ]);
     exit;
 }
+
 
 // Global Headers
 header("Access-Control-Allow-Origin: *");
