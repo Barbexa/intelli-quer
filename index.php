@@ -73,13 +73,13 @@ $page = isset($params['page']) ? max((int) $params['page'], 1) : 1;
 $offset = ($page - 1) * $limit;
 
 // Get Total for metadata (needed for the response structure)
-$countStmt = $conn->prepare("SELECT COUNT(*) FROM (" . str_replace("SELECT *", "SELECT 1", $sql) . ") as sub");
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM (" . str_replace("SELECT *", "SELECT 1", $sql) . ") as sub");
 $countStmt->execute($values);
 $total = $countStmt->fetchColumn();
 
 // Final Query with Limit and Offset
 $sql .= " LIMIT $limit OFFSET $offset";
-$stmt = $conn->prepare($sql);
+$stmt = $pdo->prepare($sql);
 $stmt->execute($values);
 $results = $stmt->fetchAll();
 
